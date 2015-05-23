@@ -81,7 +81,7 @@ gretelApp.controller('storyCtrl', ['$scope', '$routeParams', '$location', 'Story
     $scope.story = {};
     $scope.inRange = false;
     $scope.completed = false;
-    $scope.contributions = {};    
+    $scope.contributions = {};
 
     Story.getStory($routeParams.id)
       .then(function(result){
@@ -101,8 +101,33 @@ gretelApp.controller('nearbyCtrl', ['$scope', '$location', 'Story', 'Map', 'Loca
     $scope.completedFilter = false;
     Map.initMap();
 
+
     $scope.contribute = function(story){
-      $location.url('/stories/' + story.id + '/contributions/new');
+
+      Locator.getLocation(story)
+      .then(function(location){
+        // console.log("Got position: ", location);
+        $scope.lat = location.coords.latitude
+        $scope.lng = location.coords.longitude
+
+        return Story.isInRange(story.id, $scope.lat, $scope.lng)
+      })
+      .then(function(result){
+            // console.log(result);
+            $scope.in_range = result.data.in_range
+            if ($scope.in_range)
+            {
+              $location.url('/stories/' + story.id + '/contributions/new');
+            }
+            else
+            {
+              alert("You are not in range to contribute!");
+            }
+      })
+      .catch(function(error){
+            console.log('Got error trying to get is in range: ', error)
+      })
+
     }
 
     $scope.viewComplete = function(story){
@@ -142,7 +167,7 @@ gretelApp.controller('nearbyCtrl', ['$scope', '$location', 'Story', 'Map', 'Loca
       })
       .then(function(result){
         // console.log('Result is:', result);
-        $scope.stories = result.data;
+        $scope.stories = result.data.reverse();
         updateStoryMarkers();
 
       })
@@ -150,12 +175,12 @@ gretelApp.controller('nearbyCtrl', ['$scope', '$location', 'Story', 'Map', 'Loca
         console.log("Got error trying to get nearby stories", error);
       })
 
-      
+
 }]);
 
 
-gretelApp.controller('searchCtrl', ['$scope', '$location', 'Story', 'Map',
-  function ($scope, $location, Story, Map){
+gretelApp.controller('searchCtrl', ['$scope', '$location', 'Story', 'Map', 'Locator',
+  function ($scope, $location, Story, Map, Locator){
 
     $scope.stories = {};
     $scope.completedFilter = false;
@@ -174,7 +199,31 @@ gretelApp.controller('searchCtrl', ['$scope', '$location', 'Story', 'Map',
     var geocoder = new google.maps.Geocoder();
 
     $scope.contribute = function(story){
-      $location.url('/stories/' + story.id + '/contributions/new');
+
+      Locator.getLocation(story)
+      .then(function(location){
+        // console.log("Got position: ", location);
+        $scope.lat = location.coords.latitude
+        $scope.lng = location.coords.longitude
+
+        return Story.isInRange(story.id, $scope.lat, $scope.lng)
+      })
+      .then(function(result){
+            // console.log(result);
+            $scope.in_range = result.data.in_range
+            if ($scope.in_range)
+            {
+              $location.url('/stories/' + story.id + '/contributions/new');
+            }
+            else
+            {
+              alert("You are not in range to contribute!");
+            }
+      })
+      .catch(function(error){
+            console.log('Got error trying to get is in range: ', error)
+      })
+
     }
 
     $scope.viewComplete = function(story){
@@ -218,7 +267,7 @@ gretelApp.controller('searchCtrl', ['$scope', '$location', 'Story', 'Map',
         Story.getNearby($scope.lat, $scope.lng)
           .then(function(result){
             // console.log(result);
-            $scope.stories = result.data;
+            $scope.stories = result.data.reverse();
             updateStoryMarkers();
           }, function(error){
             console.log("Got error trying to get nearby stories", error);
